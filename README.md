@@ -23,15 +23,46 @@ Para facilitar a avaliação, os seguintes usuários foram pré-configurados no 
 
 ---
 
+## 📸 Demonstração Visual
+
+### 💻 Interface do Sistema
+A plataforma foi desenhada com foco na usabilidade, garantindo que qualquer colaborador consiga utilizar sem necessidade de treino prévio.
+
+<div align="center">
+  <img src="docs/kanban.jpg" alt="Painel Kanban" width="800">
+  <p><em>Painel Kanban interativo com cálculo visual de SLA e divisão por cores.</em></p>
+</div>
+
+<br>
+
+<div align="center">
+  <img src="docs/nova-demanda.png" alt="Abertura de Demanda" width="400">
+  <img src="docs/gestao-usuarios.png" alt="Gestão de Usuários" width="400">
+  <p><em>Formulário de abertura de chamados (esquerda) e Gestão de Usuários com RBAC (direita).</em></p>
+</div>
+
+### 🤖 Automações de Notificação (n8n)
+O sistema não depende de cobrança humana. Webhooks disparam gatilhos no n8n que gerem toda a comunicação transacional com os colaboradores e gestores:
+
+<div align="center">
+  <img src="docs/email-novo.png" alt="Nova Demanda Registrada" width="260">
+  <img src="docs/email-andamento.png" alt="Demanda em Andamento" width="260">
+  <img src="docs/email-alerta.png" alt="Alerta de Inatividade SLA" width="260">
+  <p><em>Fluxo dinâmico: Criação (Roxo), Atendimento Iniciado (Laranja) e Alerta de Ociosidade para Gestores (Vermelho).</em></p>
+</div>
+
+---
+
 ## 📊 Roteiro da Apresentação (O Impacto Gerado)
 
 Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mensuráveis**. Abaixo, o fluxo lógico da solução:
 
-1. **O Problema Atual:** Demandas perdidas no Discord/WhatsApp, falta de SLA claro e o solicitante no "escuro" sem saber quem está atendendo.
-2. **A Solução (Portal Único):** Um ambiente de abertura estruturada de chamados, onde o colaborador não precisa de treinamento para usar. O Kanban organiza visualmente o que é prioridade.
-3. **Automação Inteligente (n8n):** O sistema não depende de cobrança humana. O Webhook avisa quando o ticket nasce, muda de cor (para Laranja) notificando o solicitante quando o analista assume a demanda, e finaliza (Verde) quando concluído.
-4. **Ganhos Mensuráveis (A Cereja do Bolo):** * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc).
-   * **Exportação de Dados:** Botão de gerar CSV em 1 clique, entregando *Business Intelligence* imediato para a diretoria analisar gargalos.
+1. **O Problema Atual:** Demandas perdidas no Discord/WhatsApp, falta de SLA claro e o solicitante no "escuro" sem saber quem está a atender.
+2. **A Solução (Portal Único):** Um ambiente de abertura estruturada de chamados. O Kanban organiza visualmente o que é prioridade.
+3. **Automação Inteligente (n8n):** O Webhook avisa quando o ticket nasce, notifica o solicitante quando o analista assume a demanda, e finaliza quando concluído.
+4. **Ganhos Mensuráveis (A Cereja do Bolo):** 
+   * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc).
+   * **Exportação de Dados:** Botão para gerar relatórios CSV num clique, entregando *Business Intelligence* imediato para a diretoria.
    * **Segurança (RBAC):** Proteção de nível empresarial com Supabase *Row Level Security*, garantindo que cada um só acesse o que lhe compete.
 
 ---
@@ -42,7 +73,7 @@ Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mens
 * **Controle de Acesso (RBAC):** Sistema hierárquico isolando a visão com base na variável `is_admin`.
 * **Painel Kanban Interativo:** Interface moderna com recurso *Drag & Drop* para movimentação de status.
 * **Exportação de Dados:** Geração instantânea de relatórios `.csv` com o inventário da tela atual.
-* **UI/UX Premium:** Alertas customizados (`CustomUI`), responsividade e **Modo Escuro (Dark Mode)** integrado, proporcionando conforto visual.
+* **UI/UX Premium:** Alertas customizados (`CustomUI`), responsividade e **Modo Escuro (Dark Mode)** integrado.
 
 ---
 
@@ -86,7 +117,7 @@ source venv/bin/activate  # (No Windows: venv\Scripts\activate)
 # 3. Instale as dependências
 pip install -r requirements.txt
 
-# 4. Crie o arquivo .env e insira suas chaves do Supabase e n8n
+# 4. Crie o arquivo .env e insira as suas chaves do Supabase e n8n
 # (SUPABASE_URL, SUPABASE_KEY, N8N_WEBHOOK_URL)
 
 # 5. Inicie o servidor
