@@ -17,9 +17,10 @@
             <nav class="menu">
                 <a href="#" class="menu-item active"><i class="ph ph-kanban icon"></i> Painel Kanban</a>
                 <a href="#" class="menu-item"><i class="ph ph-clipboard-text icon"></i> Meus Chamados</a>
-                {% if usuario_dept in ['TI', 'Geral'] %}
+                {% if is_admin %}
                 <a href="#" id="btn-gestao-usuarios" class="menu-item"><i class="ph ph-user-gear icon"></i> Gestão de Usuários</a>
                 {% endif %}
+                <a href="#" id="btn-theme-toggle" class="menu-item" style="margin-top: 15px; border-top: 1px solid #e0e0e0; padding-top: 15px;"><i class="ph ph-moon icon"></i> Alterar Tema</a>
             </nav>
             <div style="margin-top: auto; padding: 20px; border-top: 1px solid #e0e0e0; display: flex; align-items: center; gap: 10px;">
                 <div style="width: 40px; height: 40px; background: var(--accent-light); color: var(--accent-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">{{ usuario_logado[0] }}</div>
@@ -37,7 +38,10 @@
                     <i class="ph ph-magnifying-glass" style="position: absolute; margin: 12px 15px; color: #888;"></i>
                     <input type="text" placeholder="Buscar ticket..." style="padding-left: 40px;">
                 </div>
-                <button id="btn-nova-demanda" class="btn-primary"><i class="ph ph-plus"></i> Novo Ticket</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btn-exportar" class="btn-action" style="padding: 10px 15px; font-weight: 600;"><i class="ph ph-download-simple"></i> Exportar Dados</button>
+                    <button id="btn-nova-demanda" class="btn-primary"><i class="ph ph-plus"></i> Novo Ticket</button>
+                </div>
             </header>
 
             <div class="kanban-board">
@@ -208,6 +212,9 @@
                         <option value="Comercial">Comercial</option>
                         <option value="Financeiro">Financeiro</option>
                     </select>
+                    <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; color: #475569; background: white; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                        <input type="checkbox" id="novo-admin" style="width: auto;"> É Admin?
+                    </label>
                     <button type="submit" class="btn-primary" style="white-space: nowrap;">Cadastrar Usuário</button>
                 </form>
             </div>
@@ -218,7 +225,8 @@
                         <th style="padding: 12px 15px;">Nome</th>
                         <th style="padding: 12px 15px;">E-mail</th>
                         <th style="padding: 12px 15px;">Departamento</th>
-                        <th style="padding: 12px 15px; text-align: center;">Ações</th>
+                        <th style="padding: 12px 15px; text-align: center;">Admin</th>
+                        <th style="padding: 12px 15px; text-align: center;">Excluir</th>
                     </tr>
                 </thead>
                 <tbody id="user-table-body"></tbody>
@@ -227,9 +235,10 @@
     </div>
 
     <script>
-        // Passa os dados seguros do backend para o frontend tomar decisões visuais
+        // Transforma o status do python num booleano do JS
         window.USER_DEPT = "{{ usuario_dept }}";
         window.USER_NAME = "{{ usuario_logado }}";
+        window.IS_ADMIN = {{ 'true' if is_admin else 'false' }};
     </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

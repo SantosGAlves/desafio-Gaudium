@@ -5,6 +5,8 @@ import httpx
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from datetime import datetime, timezone
+import random
+import string
 
 load_dotenv()
 
@@ -28,7 +30,7 @@ def disparar_n8n(evento, ticket_data):
 @app.route('/')
 def index():
     if 'usuario_id' not in session: return redirect(url_for('login_page'))
-    return render_template('index.html', usuario_logado=session.get('usuario_nome'), usuario_dept=session.get('usuario_dept'))
+    return render_template('index.html', usuario_logado=session.get('usuario_nome'), usuario_dept=session.get('usuario_dept'), is_admin=session.get('is_admin'))
 
 @app.route('/login')
 def login_page():
@@ -38,20 +40,25 @@ def login_page():
 def fazer_login():
     try:
         dados = request.json
-        auth_response = supabase.auth.sign_in_with_password({"email": dados.get('email'), "password": dados.get('senha')})
+        email_login = dados.get('email').lower().strip()
+        auth_response = supabase.auth.sign_in_with_password({"email": email_login, "password": dados.get('senha')})
         
-        perfil_response = supabase.table('usuarios').select('*').eq('email', dados.get('email')).execute()
-        nome = dados.get('email').split('@')[0]
+        perfil_response = supabase.table('usuarios').select('*').ilike('email', email_login).execute()
+        
+        nome = email_login.split('@')[0]
         dept = 'Geral'
-
+        is_admin = False
+        
         if len(perfil_response.data) > 0:
             nome = perfil_response.data[0]['nome']
             dept = perfil_response.data[0]['departamento']
-
+            is_admin = perfil_response.data[0].get('is_admin', False)
+            
         session['usuario_id'] = auth_response.user.id
         session['usuario_nome'] = nome
         session['usuario_dept'] = dept
-        session['usuario_email'] = dados.get('email') # <--- NOVA LINHA: Guarda o e-mail na sessão
+        session['usuario_email'] = email_login 
+        session['is_admin'] = is_admin # <-- NOVA LÓGICA DE ADMIN AQUI
         
         return jsonify({"status": "sucesso", "mensagem": "Bem-vindo!"})
     except Exception as e:
@@ -62,21 +69,14 @@ def recuperar_senha():
     try:
         dados = request.json
         email = dados.get('email')
-        
-        if not email:
-            return jsonify({"status": "erro", "mensagem": "E-mail não fornecido."}), 400
-            
-        # Função NATIVA e segura do Supabase para reset de senha
+        if not email: return jsonify({"status": "erro", "mensagem": "E-mail não fornecido."}), 400
         supabase.auth.reset_password_email(email)
-        
-        # Retornamos sucesso genérico por segurança (para não confirmar a hackers se o e-mail existe ou não na base)
         return jsonify({"status": "sucesso", "mensagem": "Se o e-mail existir na nossa base, receberá um link em instantes."})
     except Exception as e:
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
     
 @app.route('/nova-senha')
 def nova_senha_page():
-    # Renderiza a tela para o usuário digitar a nova senha
     return render_template('nova-senha.html')
 
 @app.route('/api/atualizar-senha', methods=['POST'])
@@ -85,19 +85,10 @@ def atualizar_senha():
         dados = request.json
         token = dados.get('access_token')
         nova_senha = dados.get('senha')
-        
-        if not token:
-            return jsonify({"status": "erro", "mensagem": "Link inválido ou expirado."}), 400
-
-        # Autentica temporariamente o usuário usando o token que veio no link do e-mail
+        if not token: return jsonify({"status": "erro", "mensagem": "Link inválido ou expirado."}), 400
         supabase.auth.set_session(token, "")
-        
-        # Atualiza a senha no Supabase
         supabase.auth.update_user({"password": nova_senha})
-        
-        # Limpa a sessão para obrigar o usuário a fazer o login normal com a nova senha
         supabase.auth.sign_out()
-        
         return jsonify({"status": "sucesso"})
     except Exception as e:
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
@@ -116,14 +107,12 @@ def get_demandas():
         
         usuario_dept = session.get('usuario_dept')
         nome_usuario = session.get('usuario_nome')
-        is_admin = usuario_dept and usuario_dept.upper() in ['GERAL', 'ADMIN', 'DIRETORIA']
+        is_admin = session.get('is_admin', False)
 
         if request.args.get('meus') == 'true':
-            # Aba Meus Chamados: O usuário vê APENAS o que ele solicitou.
             dados = [d for d in dados if d.get('solicitante') == nome_usuario]
         else:
-            # Aba Kanban: O usuário vê APENAS os chamados onde a sua área é o DESTINO (A fila de trabalho dele)
-            if not is_admin:
+            if not is_admin: # <-- ADMINS VEEM TUDO NO KANBAN
                 dados = [d for d in dados if d.get('departamento') == usuario_dept]
             
         return jsonify({"status": "sucesso", "dados": dados})
@@ -137,7 +126,7 @@ def criar_demanda():
         dados = request.json
         nova_demanda = {
             "setor_solicitante": session.get('usuario_dept'),
-            "email_solicitante": session.get('usuario_email'), # <--- NOVA LINHA: Carimba o e-mail no ticket
+            "email_solicitante": session.get('usuario_email'),
             "titulo": dados.get('titulo'),
             "descricao": dados.get('descricao'),
             "prioridade": dados.get('prioridade'),
@@ -162,20 +151,15 @@ def atualizar_status(id):
         atualizacao = {}
         ticket_atual = supabase.table('demandas').select('*').eq("id", id).execute().data[0]
 
-        # ==========================================
-        # SEGURANÇA DE BACKEND (RBAC INQUEBRÁVEL)
-        # ==========================================
         usuario_dept = session.get('usuario_dept', '').upper()
         dept_destino = (ticket_atual.get('departamento') or '').upper()
-        is_admin = usuario_dept in ['GERAL', 'ADMIN', 'DIRETORIA']
+        is_admin = session.get('is_admin', False)
         
-        # Apenas permite se a pessoa for do departamento que vai resolver o ticket, 
-        # se for Admin, ou se a ação for apenas adicionar um comentário/histórico.
         is_apenas_historico = ('novo_historico' in dados and len(dados) == 1)
         
+        # <-- SEGURANÇA BASEADA NO STATUS DE ADMIN
         if not is_admin and usuario_dept != dept_destino and not is_apenas_historico:
             return jsonify({"status": "erro", "mensagem": "Acesso Negado: Apenas a área de destino pode assumir ou alterar este chamado."}), 403
-        # ==========================================
 
         def calcular_tempo_pendente():
             if ticket_atual.get('hora_inicio'):
@@ -184,7 +168,6 @@ def atualizar_status(id):
             return 0
 
         evento_n8n = None
-
         if 'status' in dados:
             novo_status = dados.get('status')
             atualizacao['status'] = novo_status
@@ -206,7 +189,6 @@ def atualizar_status(id):
                 atualizacao['status'] = 'andamento'
                 atualizacao['responsavel'] = session.get('usuario_nome')
                 atualizacao['hora_inicio'] = datetime.now(timezone.utc).isoformat()
-                evento_n8n = "ticket_em_execucao"
             elif execucao == 'pausado':
                 atualizacao['status'] = 'pausado'
                 atualizacao['tempo_gasto'] = ticket_atual.get('tempo_gasto', 0) + calcular_tempo_pendente()
@@ -215,7 +197,6 @@ def atualizar_status(id):
         if 'novo_historico' in dados:
             hist_antigo = ticket_atual.get('historico', '') or ''
             atualizacao['historico'] = hist_antigo + f"• {session.get('usuario_nome')}: {dados.get('novo_historico')}\n"
-            evento_n8n = "nova_interacao"
 
         response = supabase.table('demandas').update(atualizacao).eq("id", id).execute()
         if evento_n8n: disparar_n8n(evento_n8n, response.data[0])
@@ -225,72 +206,61 @@ def atualizar_status(id):
 
 @app.route('/api/demandas/<string:id>', methods=['DELETE'])
 def deletar_demanda(id):
-    if 'usuario_id' not in session: return jsonify({"status": "erro", "mensagem": "Não autorizado"}), 401
+    if not session.get('is_admin'): return jsonify({"status": "erro", "mensagem": "Não autorizado"}), 403
     try:
         supabase.table('demandas').delete().eq("id", id).execute()
         return jsonify({"status": "sucesso"})
     except Exception as e:
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
-    
-@app.route('/admin')
-def admin_page():
-    # Segurança: Apenas TI ou Geral acessam
-    if session.get('usuario_dept') not in ['TI', 'Geral']:
-        return "Acesso Negado", 403
-    return render_template('admin.html')
 
 @app.route('/api/admin/usuarios', methods=['POST'])
 def criar_usuario():
-    if session.get('usuario_dept') not in ['TI', 'Geral']:
-        return jsonify({"status": "erro", "mensagem": "Não autorizado"}), 403
-    
+    if not session.get('is_admin'): return jsonify({"status": "erro", "mensagem": "Não autorizado"}), 403
     dados = request.json
     try:
-        # 1. Cria o usuário no Auth do Supabase
-        # Nota: Você precisará de uma senha temporária ou enviar um link de convite
+        senha_temporaria = ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + "@"
         auth_response = supabase.auth.admin.create_user({
-            "email": dados.get('email'),
-            "password": "123456", # Recomendado: forçar reset no primeiro login
-            "email_confirm": True
+            "email": dados.get('email'), "password": senha_temporaria, "email_confirm": True
         })
-        
-        # 2. Insere os dados de perfil na sua tabela 'usuarios'
         perfil = {
-            "nome": dados.get('nome'),
-            "email": dados.get('email'),
-            "departamento": dados.get('departamento')
+            "nome": dados.get('nome'), "email": dados.get('email'),
+            "departamento": dados.get('departamento'), "is_admin": dados.get('is_admin', False)
         }
         supabase.table('usuarios').insert(perfil).execute()
-        
-        return jsonify({"status": "sucesso"})
+        return jsonify({"status": "sucesso", "senha_temp": senha_temporaria})
     except Exception as e:
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
     
-    # Rota para listar usuários na tela admin
 @app.route('/api/admin/usuarios', methods=['GET'])
 def get_usuarios():
-    if session.get('usuario_dept') not in ['TI', 'Geral']: return jsonify({"status": "erro"}), 403
-    response = supabase.table('usuarios').select('*').execute()
+    if not session.get('is_admin'): return jsonify({"status": "erro"}), 403
+    response = supabase.table('usuarios').select('*').order('nome').execute()
     return jsonify({"status": "sucesso", "dados": response.data})
+
+# ROTA NOVA: Ligar e Desligar o status de Admin de um usuário
+@app.route('/api/admin/usuarios/<string:email>', methods=['PATCH'])
+def toggle_admin_usuario(email):
+    if not session.get('is_admin'): return jsonify({"status": "erro"}), 403
+    try:
+        novo_status = request.json.get('is_admin')
+        supabase.table('usuarios').update({"is_admin": novo_status}).eq("email", email).execute()
+        return jsonify({"status": "sucesso"})
+    except Exception as e:
+        return jsonify({"status": "erro", "mensagem": str(e)}), 500
 
 @app.route('/api/admin/usuarios/<string:email>', methods=['DELETE'])
 def deletar_usuario(email):
-    if session.get('usuario_dept') not in ['TI', 'Geral']: return jsonify({"status": "erro"}), 403
+    if not session.get('is_admin'): return jsonify({"status": "erro"}), 403
     try:
-        # 1. Tenta remover do Auth de forma segura
         try:
             users = supabase.auth.admin.list_users()
             user = next((u for u in users.users if u.email == email), None)
-            if user:
-                supabase.auth.admin.delete_user(user.id)
+            if user: supabase.auth.admin.delete_user(user.id)
         except Exception as auth_err:
-            print("Aviso: Utilizador não encontrado no Auth ou erro de permissão:", auth_err)
-            
-        # 2. Remove da tabela de perfil no banco de dados
+            pass
         supabase.table('usuarios').delete().eq("email", email).execute()
         return jsonify({"status": "sucesso"})
     except Exception as e:
-        print("Erro fatal ao deletar:", e)
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
 
 if __name__ == '__main__':

@@ -60,10 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function criarCardNaTela(demanda) {
         let classeTag = demanda.prioridade === 'alta' ? 'tag-alta' : (demanda.prioridade === 'baixa' ? 'tag-baixa' : 'tag-media');
         
-        // --- VERIFICAÇÃO DE PERMISSÃO ---
+        // --- SEGURANÇA BASEADA NO BOOLEANO IS_ADMIN ---
         const userDept = (window.USER_DEPT || '').toUpperCase();
         const ticketDept = (demanda.departamento || '').toUpperCase();
-        const isAdmin = ['GERAL', 'ADMIN', 'DIRETORIA'].includes(userDept);
+        const isAdmin = window.IS_ADMIN === true;
         const podeEditar = isAdmin || userDept === ticketDept;
         const dragStatus = podeEditar ? 'true' : 'false';
         
@@ -171,10 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
             barraSLA.style.width = `${porcentagem}%`; pctSLA.textContent = `${Math.round(porcentagem)}%`;
         } else { barraSLA.style.width = `0%`; textSLA.textContent = "SLA Indefinido"; pctSLA.textContent = "--"; }
         
-        // --- VERIFICAÇÃO MODO READ-ONLY ---
+        // --- SEGURANÇA BASEADA NO BOOLEANO IS_ADMIN ---
         const userDept = (window.USER_DEPT || '').toUpperCase();
         const ticketDept = (ticketAbertoAtual.departamento || '').toUpperCase();
-        const isAdmin = ['GERAL', 'ADMIN', 'DIRETORIA'].includes(userDept);
+        const isAdmin = window.IS_ADMIN === true;
         const podeEditar = isAdmin || userDept === ticketDept;
 
         const botoesAcao = ['btn-play-ticket', 'btn-pause-ticket', 'btn-finish-ticket', 'btn-delete-ticket'];
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.card').forEach(card => card.style.display = card.innerText.toLowerCase().includes(termo) ? 'block' : 'none');
     });
 
-    const [btnKanban, btnMeusChamados] = document.querySelectorAll('.menu-item:not(#btn-gestao-usuarios)'); // Ignora o botão de gestão no toggle do menu
+    const [btnKanban, btnMeusChamados] = document.querySelectorAll('.menu-item:not(#btn-gestao-usuarios):not(#btn-theme-toggle)'); 
     btnMeusChamados.addEventListener('click', (e) => { e.preventDefault(); btnKanban.classList.remove('active'); btnMeusChamados.classList.add('active'); modoMeusChamados = true; carregarDemandas(); });
     btnKanban.addEventListener('click', (e) => { e.preventDefault(); btnMeusChamados.classList.remove('active'); btnKanban.classList.add('active'); modoMeusChamados = false; carregarDemandas(); });
     document.getElementById('btn-logout')?.addEventListener('click', async (e) => { e.preventDefault(); await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; });
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // LÓGICA DE GESTÃO DE USUÁRIOS (COM TRAVAS DE SEGURANÇA)
+    // LÓGICA DE GESTÃO DE USUÁRIOS
     // ==========================================
     const modalUsuarios = document.getElementById('modal-gestao-usuarios');
     const btnGestaoUsuarios = document.getElementById('btn-gestao-usuarios');
@@ -300,18 +300,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         const tbody = document.getElementById('user-table-body');
         if (tbody && data.dados) {
-            tbody.innerHTML = data.dados.map(u => `
+            tbody.innerHTML = data.dados.map(u => {
+                const adminIcon = u.is_admin 
+                    ? `<i class="ph-fill ph-toggle-right" style="color: #16a34a; font-size: 1.8rem; cursor:pointer;" onclick="toggleAdmin('${u.email}', false)" title="Revogar Admin"></i>` 
+                    : `<i class="ph ph-toggle-left" style="color: #94a3b8; font-size: 1.8rem; cursor:pointer;" onclick="toggleAdmin('${u.email}', true)" title="Tornar Admin"></i>`;
+                
+                return `
                 <tr style="border-top: 1px solid #e2e8f0;">
                     <td style="padding: 12px 15px;">${u.nome}</td>
                     <td style="padding: 12px 15px;">${u.email}</td>
                     <td style="padding: 12px 15px;"><span class="tag tag-dept">${u.departamento}</span></td>
+                    <td style="padding: 12px 15px; text-align: center; vertical-align: middle;">${adminIcon}</td>
                     <td style="padding: 12px 15px; text-align: center;">
                         <button onclick="excluirUser('${u.email}')" style="border:none; background:none; color:#ef4444; cursor:pointer; font-size: 1.2rem; transition: 0.2s;"><i class="ph ph-trash"></i></button>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
     }
+
+    // NOVA FUNÇÃO: Liga e desliga o status de admin com um clique
+    window.toggleAdmin = async (email, novoStatus) => {
+        if(await CustomUI.confirm(`Deseja alterar as permissões de administrador para ${email}?`)){
+            await fetch(`/api/admin/usuarios/${email}`, { 
+                method: 'PATCH', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ is_admin: novoStatus }) 
+            });
+            carregarTabelaUsuarios();
+        }
+    };
 
     if (formCadastroUser) {
         formCadastroUser.addEventListener('submit', async (e) => {
@@ -319,14 +337,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = {
                 nome: document.getElementById('novo-nome').value,
                 email: document.getElementById('novo-email').value,
-                departamento: document.getElementById('novo-dept').value
+                departamento: document.getElementById('novo-dept').value,
+                is_admin: document.getElementById('novo-admin').checked // <-- Manda o admin
             };
             const response = await fetch('/api/admin/usuarios', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            const data = await response.json();
             
-            if (response.ok) {
+            if (response.ok && data.status === 'sucesso') {
                 formCadastroUser.reset();
                 carregarTabelaUsuarios();
-                CustomUI.alert("Usuário cadastrado com sucesso!");
+                CustomUI.alert(`Usuário cadastrado!\nA senha temporária é: ${data.senha_temp}`);
             } else {
                 CustomUI.alert("Erro ao cadastrar o usuário. Verifique as permissões.");
             }
@@ -339,7 +359,43 @@ document.addEventListener('DOMContentLoaded', () => {
             carregarTabelaUsuarios();
         }
     };
+
+    // Exportar Relatório em CSV
+    const btnExportar = document.getElementById('btn-exportar');
+    if(btnExportar) {
+        btnExportar.addEventListener('click', () => {
+            if(!window.ticketsData || window.ticketsData.length === 0) {
+                CustomUI.alert("Não há dados para exportar.");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,ID;Titulo;Prioridade;Status;Solicitante;Departamento;Prazo\n";
+            window.ticketsData.forEach(t => {
+                csvContent += `${t.codigo};${t.titulo};${t.prioridade};${t.status};${t.solicitante};${t.departamento};${t.prazo}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "relatorio_gaudium.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
+    // Dark Mode Toggle
+    const btnTheme = document.getElementById('btn-theme-toggle');
+    if(btnTheme) {
+        btnTheme.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.body.classList.toggle('dark-mode');
+            const icon = btnTheme.querySelector('i');
+            if(document.body.classList.contains('dark-mode')) {
+                icon.classList.replace('ph-moon', 'ph-sun');
+            } else {
+                icon.classList.replace('ph-sun', 'ph-moon');
+            }
+        });
+    }
     
-    // Inicia carregamento da tela
     carregarDemandas();
 });

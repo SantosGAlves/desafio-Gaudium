@@ -1,0 +1,59 @@
+# ==========================================
+# Variáveis de Ambiente e Segredos (CRÍTICO)
+# ==========================================
+.env
+.env.*
+*.env
+
+# ==========================================
+# Ambientes Virtuais do Python
+# ==========================================
+venv/
+env/
+.venv/
+env.bak/
+venv.bak/
+
+# ==========================================
+# Arquivos de Cache e Compilação do Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==========================================
+# Arquivos de Sistema Operacional
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==========================================
+# Configurações de IDEs e Editores de Código
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
