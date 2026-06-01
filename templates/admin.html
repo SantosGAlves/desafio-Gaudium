@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestão de Usuários | Gaudium</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body style="padding: 40px; background: #f8fafc;">
+    <div style="max-width: 900px; margin: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Gestão de Usuários</h2>
+            <a href="/" class="btn-action">Voltar ao Kanban</a>
+        </div>
+        
+        <table style="width: 100%; background: white; border-radius: 12px; border-collapse: collapse; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <thead>
+                <tr style="background: #f1f5f9; text-align: left;">
+                    <th style="padding: 15px;">Nome</th>
+                    <th style="padding: 15px;">E-mail</th>
+                    <th style="padding: 15px;">Departamento</th>
+                    <th style="padding: 15px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="user-table"></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function carregarUsuarios() {
+            const res = await fetch('/api/admin/usuarios');
+            const data = await res.json();
+            const tbody = document.getElementById('user-table');
+            tbody.innerHTML = data.dados.map(u => `
+                <tr style="border-top: 1px solid #eee;">
+                    <td style="padding: 15px;">${u.nome}</td>
+                    <td style="padding: 15px;">${u.email}</td>
+                    <td style="padding: 15px;"><span class="tag tag-dept">${u.departamento}</span></td>
+                    <td style="padding: 15px;">
+                        <button onclick="excluirUsuario('${u.email}')" style="border:none; background:none; color:red; cursor:pointer;"><i class="ph ph-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function excluirUsuario(email) {
+            if(!confirm("Tem certeza que deseja excluir este usuário?")) return;
+            await fetch(`/api/admin/usuarios/${email}`, { method: 'DELETE' });
+            carregarUsuarios();
+        }
+
+        carregarUsuarios();
+    </script>
+</body>
+</html>

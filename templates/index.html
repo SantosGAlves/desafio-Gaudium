@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaudium | Demandas</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo-area" style="padding: 15px;">
+                <img src="{{ url_for('static', filename='images/gaudium-logo-transparente.avif') }}" alt="Gaudium" style="width: 150px;">
+            </div>
+            <nav class="menu">
+                <a href="#" class="menu-item active"><i class="ph ph-kanban icon"></i> Painel Kanban</a>
+                <a href="#" class="menu-item"><i class="ph ph-clipboard-text icon"></i> Meus Chamados</a>
+                {% if usuario_dept in ['TI', 'Geral'] %}
+                <a href="#" id="btn-gestao-usuarios" class="menu-item"><i class="ph ph-user-gear icon"></i> Gestão de Usuários</a>
+                {% endif %}
+            </nav>
+            <div style="margin-top: auto; padding: 20px; border-top: 1px solid #e0e0e0; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 40px; background: var(--accent-light); color: var(--accent-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">{{ usuario_logado[0] }}</div>
+                <div>
+                    <p style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark); margin-bottom: 2px;">{{ usuario_logado }}</p>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">{{ usuario_dept }}</p>
+                    <a href="#" id="btn-logout" style="font-size: 0.8rem; color: var(--col-todo); text-decoration: none; margin-top: 5px; display: inline-block;"><i class="ph ph-sign-out"></i> Sair</a>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="ph ph-magnifying-glass" style="position: absolute; margin: 12px 15px; color: #888;"></i>
+                    <input type="text" placeholder="Buscar ticket..." style="padding-left: 40px;">
+                </div>
+                <button id="btn-nova-demanda" class="btn-primary"><i class="ph ph-plus"></i> Novo Ticket</button>
+            </header>
+
+            <div class="kanban-board">
+                <section class="kanban-column" id="col-entrada">
+                    <div class="column-header header-todo">
+                        <div class="col-title-area"><h2>A FAZER</h2><span class="col-count" id="count-entrada">0</span></div>
+                        <div class="col-icon"><i class="ph-fill ph-flag"></i></div>
+                    </div><div class="kanban-cards"></div>
+                </section>
+                <section class="kanban-column" id="col-andamento">
+                    <div class="column-header header-doing">
+                        <div class="col-title-area"><h2>ATENDENDO</h2><span class="col-count" id="count-andamento">0</span></div>
+                        <div class="col-icon"><i class="ph-fill ph-play-circle"></i></div>
+                    </div><div class="kanban-cards"></div>
+                </section>
+                <section class="kanban-column" id="col-pausado">
+                    <div class="column-header header-paused">
+                        <div class="col-title-area"><h2>PAUSADO</h2><span class="col-count" id="count-pausado">0</span></div>
+                        <div class="col-icon"><i class="ph-fill ph-pause-circle"></i></div>
+                    </div><div class="kanban-cards"></div>
+                </section>
+                <section class="kanban-column" id="col-concluido">
+                    <div class="column-header header-done">
+                        <div class="col-title-area"><h2>FINALIZADO</h2><span class="col-count" id="count-concluido">0</span></div>
+                        <div class="col-icon"><i class="ph-fill ph-check-circle"></i></div>
+                    </div><div class="kanban-cards"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-nova-demanda" class="modal">
+        <div class="modal-content" style="width: 850px;"> <span class="close-btn" id="close-novo-demanda"><i class="ph ph-x"></i></span>
+            <h2 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Abertura de Demanda Interna</h2>
+            <form id="form-demanda" class="form-grid">
+                <div class="form-main">
+                    <div class="form-group">
+                        <label for="titulo">Assunto</label>
+                        <input type="text" id="titulo" required placeholder="Ex: Criação de Webhook no n8n" style="border-left: 3px solid #ef4444;">
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao">Descrição / Briefing</label>
+                        <div style="border: 1px solid #ddd; border-radius: 6px; overflow: hidden; border-left: 3px solid #ef4444;">
+                            <div style="background: #f1f5f9; padding: 10px; border-bottom: 1px solid #ddd; color: #475569; display: flex; gap: 15px; font-size: 1.1rem;">
+                                <i class="ph ph-text-b"></i><i class="ph ph-text-italic"></i><i class="ph ph-text-underline"></i><i class="ph ph-text-strikethrough"></i> | 
+                                <i class="ph ph-text-align-left"></i><i class="ph ph-text-align-center"></i> | 
+                                <i class="ph ph-code"></i><i class="ph ph-link"></i><i class="ph ph-image"></i>
+                            </div>
+                            <textarea id="descricao" required placeholder="Descreva os requisitos ou o problema detalhadamente..." style="border: none; border-radius: 0;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-sidebar" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div class="form-group">
+                        <label>Seu Departamento (Origem)</label>
+                        <input type="text" id="setor_solicitante" value="{{ usuario_dept }}" disabled style="background-color: #e2e8f0; cursor: not-allowed; font-weight: bold; color: #64748b; border-color: #cbd5e1;">
+                    </div>
+                    <div class="form-group">
+                        <label for="departamento">Área Responsável (Destino)</label>
+                        <select id="departamento">
+                            <option value="TI">TI / Automação</option>
+                            <option value="RH">RH / Gente e Gestão</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Comercial">Comercial</option>
+                            <option value="Diretoria">Diretoria</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prioridade">Prioridade</label>
+                        <select id="prioridade">
+                            <option value="baixa">Baixo</option>
+                            <option value="media" selected>Médio</option>
+                            <option value="alta">Alto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prazo">Prazo Limite (SLA)</label>
+                        <input type="date" id="prazo" required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: auto;">Registrar Demanda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-gestao-ticket" class="modal">
+        <div class="modal-content ticket-modal">
+            <div class="ticket-header">
+                <div class="ticket-title-area">
+                    <h2 class="card-title-inline" style="font-size: 1.5rem; display: flex; align-items: center; gap: 12px; margin: 0;">
+                        <span class="ticket-badge" id="ticket-codigo">#0000</span>
+                        <span id="ticket-titulo-view">Título</span>
+                    </h2>
+                </div>
+                <div class="ticket-controls">
+                    <button id="btn-play-ticket" class="btn-control play" title="Iniciar"><i class="ph-fill ph-play"></i></button>
+                    <button id="btn-pause-ticket" class="btn-control pause" title="Pausar"><i class="ph-fill ph-pause"></i></button>
+                    <button id="btn-finish-ticket" class="btn-control finish" title="Concluir"><i class="ph ph-check-circle"></i></button>
+                    <button id="btn-delete-ticket" class="btn-control delete" title="Excluir"><i class="ph ph-trash"></i></button>
+                    <div style="width: 1px; background: #e2e8f0; margin: 0 5px; height: 20px;"></div>
+                    <button id="close-gestao" class="btn-control" title="Fechar Janela" style="color: #64748b; border: none; background: transparent;"><i class="ph ph-x" style="font-size: 1.4rem;"></i></button>
+                </div>
+            </div>
+            <div class="ticket-body">
+                <div class="ticket-main">
+                    <div class="ticket-section">
+                        <h3>Briefing da Demanda</h3>
+                        <p id="ticket-descricao-view" class="texto-descritivo"></p>
+                    </div>
+                    <div class="ticket-section">
+                        <h3>Histórico de Interações</h3>
+                        <div id="ticket-historico-view" class="timeline-container"></div>
+                        <div class="add-history-box">
+                            <textarea id="novo-comentario" placeholder="Adicione uma nota interna ou atualização..." rows="2"></textarea>
+                            <button id="btn-add-historico" class="btn-primary" style="margin-top: 10px;"><i class="ph ph-paper-plane-right"></i> Atualizar Histórico</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="ticket-sidebar">
+                    <div class="info-block"><label>De (Origem)</label>
+                        <span id="ticket-solicitante-view"></span>
+                        <span id="ticket-setor-origem" style="font-size: 0.75rem; color: var(--text-muted); display: block;"></span>
+                    </div>
+                    <div class="info-block"><label>Para (Destino)</label><span id="ticket-dept-view" class="tag tag-dept"></span></div>
+                    <div class="info-block"><label>Responsável</label><span id="ticket-resp-view"></span></div>
+                    <div class="info-block">
+                        <label>SLA de Resolução</label>
+                        <span id="ticket-prazo-view" style="font-size: 0.85rem; margin-bottom: 5px; display: block;"></span>
+                        <div class="sla-progress-container"><div id="ticket-sla-bar" class="sla-progress-bar"></div></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 5px; color: var(--text-muted); font-weight: 600;">
+                            <span id="ticket-sla-texto">Calculando...</span>
+                            <span id="ticket-sla-porcentagem">0%</span>
+                        </div>
+                    </div>
+                    <div class="info-block"><label>Horas Apontadas</label><span id="ticket-tempo-view" style="color: var(--accent-purple); font-size: 1.2rem; font-weight: 700;">00h 00m</span></div>
+                    <div class="info-block"><label>Status</label><span id="ticket-status-view"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-dialog" class="modal" style="z-index: 9999;">
+        <div class="modal-content" style="width: 400px; text-align: center; padding: 40px 30px;">
+            <div style="font-size: 3rem; color: var(--accent-purple); margin-bottom: 10px;"><i class="ph ph-warning-circle"></i></div>
+            <h3 id="dialog-title" style="margin-bottom: 15px; color: var(--text-dark);">Atenção</h3>
+            <p id="dialog-msg" style="color: var(--text-muted); margin-bottom: 20px;"></p>
+            <input type="text" id="dialog-input" style="display:none; width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="dialog-btn-cancel" class="btn-action" style="padding: 10px 20px;">Cancelar</button>
+                <button id="dialog-btn-confirm" class="btn-primary" style="padding: 10px 20px;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-gestao-usuarios" class="modal">
+        <div class="modal-content" style="width: 900px; max-width: 95%;">
+            <span class="close-btn" id="close-usuarios"><i class="ph ph-x"></i></span>
+            <h2 style="margin-bottom: 20px;">Gestão de Usuários</h2>
+            
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                <h3 style="margin-bottom: 10px;">Cadastrar Novo Usuário</h3>
+                <form id="form-cadastro-user" style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="novo-nome" placeholder="Nome Completo" required style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <input type="email" id="novo-email" placeholder="E-mail" required style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <select id="novo-dept" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="TI">TI</option>
+                        <option value="RH">RH</option>
+                        <option value="Comercial">Comercial</option>
+                        <option value="Financeiro">Financeiro</option>
+                    </select>
+                    <button type="submit" class="btn-primary" style="white-space: nowrap;">Cadastrar Usuário</button>
+                </form>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left;">
+                        <th style="padding: 12px 15px;">Nome</th>
+                        <th style="padding: 12px 15px;">E-mail</th>
+                        <th style="padding: 12px 15px;">Departamento</th>
+                        <th style="padding: 12px 15px; text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Passa os dados seguros do backend para o frontend tomar decisões visuais
+        window.USER_DEPT = "{{ usuario_dept }}";
+        window.USER_NAME = "{{ usuario_logado }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

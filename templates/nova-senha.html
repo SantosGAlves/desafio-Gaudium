@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Senha | Gaudium Demandas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-banner">
+            <div class="banner-content">
+                <h1>GAUDIUM</h1>
+                <p>Redefinição de credenciais de acesso corporativo.</p>
+            </div>
+            <div class="shape-blob"></div>
+        </div>
+
+        <div class="login-form-section">
+            <div class="form-wrapper">
+                <h2>Criar Nova Senha</h2>
+                <p class="subtitle">Digite a sua nova senha de acesso abaixo.</p>
+
+                <div id="status-msg" class="error-message" style="display: none;"></div>
+
+                <form id="form-nova-senha">
+                    <div class="input-group">
+                        <label for="senha">Nova Senha (mínimo 6 caracteres)</label>
+                        <input type="password" id="senha" required placeholder="••••••••" minlength="6">
+                    </div>
+                    <button type="submit" class="btn-login" id="btn-submit">Salvar Nova Senha</button>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="/login" style="color: #4a148c; font-size: 0.9rem; font-weight: 600; text-decoration: none;">Voltar ao Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('form-nova-senha').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btn-submit');
+            const msgDiv = document.getElementById('status-msg');
+            const senha = document.getElementById('senha').value;
+            
+            // O Supabase envia o token no "hash" da URL (após o símbolo #)
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+
+            if (!accessToken) {
+                msgDiv.textContent = 'Token de segurança ausente. Por favor, clique novamente no link do seu e-mail.';
+                msgDiv.style.display = 'block';
+                return;
+            }
+
+            btn.textContent = 'Salvando...';
+            btn.disabled = true;
+            msgDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/atualizar-senha', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token: accessToken, senha: senha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'sucesso') {
+                    msgDiv.textContent = 'Senha alterada com sucesso! Redirecionando...';
+                    msgDiv.style.background = '#f0fdf4';
+                    msgDiv.style.color = '#166534';
+                    msgDiv.style.borderColor = '#bbf7d0';
+                    msgDiv.style.display = 'block';
+                    
+                    setTimeout(() => window.location.href = '/login', 2500);
+                } else {
+                    msgDiv.textContent = data.mensagem || 'Erro ao redefinir a senha.';
+                    msgDiv.style.display = 'block';
+                    btn.textContent = 'Salvar Nova Senha';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                msgDiv.textContent = 'Erro de conexão com o servidor.';
+                msgDiv.style.display = 'block';
+                btn.textContent = 'Salvar Nova Senha';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
