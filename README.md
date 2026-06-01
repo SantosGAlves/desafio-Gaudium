@@ -1,0 +1,93 @@
+# 🚀 Gaudium - Plataforma Inteligente de Gestão de Demandas
+
+[cite_start]Este projeto foi desenvolvido como solução para o **Case 3 (Plataforma de Gestão de Demandas Internas)** [cite: 47] do desafio prático para a vaga de Estágio em Automação e Inovação MIL da Gaudium. 
+
+[cite_start]A plataforma resolve o problema de solicitações internas realizadas por diferentes canais (e-mail, Discord) sem fluxo estruturado[cite: 48], centralizando o registro, automatizando a comunicação entre setores via **n8n** e oferecendo uma gestão visual através de um **Painel Kanban** dinâmico.
+
+---
+
+## 🌐 Acesso Rápido (Ambiente de Produção)
+
+A aplicação está hospedada na nuvem e pronta para testes. Acesse através do link:
+👉 **[Link do Sistema no Render]** *(Adicione seu link gerado no Render aqui)*
+
+### Credenciais de Teste (Demo)
+Para facilitar a avaliação, os seguintes usuários foram pré-configurados no sistema:
+
+| Perfil | E-mail | Senha | Nível de Acesso | Visão no Kanban |
+| :--- | :--- | :--- | :--- | :--- |
+| **Gestor / TI** | `admin@gaudium.com` | `123456` | `is_admin = True` | Vê todas as demandas de todas as áreas. Pode criar usuários e excluir tickets. |
+| **Colaborador** | `comercial@gaudium.com` | `123456` | `is_admin = False` | Vê apenas as demandas direcionadas ao seu próprio departamento (Comercial). |
+
+*(**Nota para a banca:** O fluxo de "Esqueci a Senha" está 100% funcional caso desejem testar o envio de e-mails de recuperação).*
+
+---
+
+## 📊 Roteiro da Apresentação (O Impacto Gerado)
+
+[cite_start]Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mensuráveis**[cite: 7]. Abaixo, o fluxo lógico da solução:
+
+1. [cite_start]**O Problema Atual:** Demandas perdidas no Discord/WhatsApp, falta de SLA claro e o solicitante no "escuro" sem saber quem está atendendo[cite: 49].
+2. [cite_start]**A Solução (Portal Único):** Um ambiente de abertura estruturada de chamados[cite: 51], onde o colaborador não precisa de treinamento para usar. [cite_start]O Kanban organiza visualmente [cite: 52] o que é prioridade.
+3. **Automação Inteligente (n8n):** O sistema não depende de cobrança humana. [cite_start]O Webhook avisa quando o ticket nasce, muda de cor (para Laranja) notificando o solicitante quando o analista assume a demanda [cite: 56][cite_start], e finaliza (Verde) quando concluído[cite: 56].
+4. [cite_start]**Ganhos Mensuráveis (A Cereja do Bolo):** * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc)[cite: 53].
+   * **Exportação de Dados:** Botão de gerar CSV em 1 clique, entregando *Business Intelligence* imediato para a diretoria analisar gargalos.
+   * **Segurança (RBAC):** Proteção de nível empresarial com Supabase *Row Level Security*, garantindo que cada um só acesse o que lhe compete.
+
+---
+
+## ✨ Destaques Técnicos & Funcionalidades
+
+* **Autenticação e Segurança (Auth):** Login, gestão de sessões criptografadas e recuperação de senhas nativa via e-mail.
+* **Controle de Acesso (RBAC):** Sistema hierárquico isolando a visão com base na variável `is_admin`.
+* **Painel Kanban Interativo:** Interface moderna com recurso *Drag & Drop* para movimentação de status.
+* **Exportação de Dados:** Geração instantânea de relatórios `.csv` com o inventário da tela atual.
+* **UI/UX Premium:** Alertas customizados (`CustomUI`), responsividade e **Modo Escuro (Dark Mode)** integrado, proporcionando conforto visual.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+* **Backend:** Python (Flask)
+* **Banco de Dados & Auth:** Supabase (PostgreSQL)
+* **Integrações & Automação:** n8n (Webhooks e Email SMTP)
+* **Frontend:** HTML5, CSS3, JavaScript (Vanilla) + Phosphor Icons
+* **Servidor Web (Produção):** Gunicorn
+* **Hospedagem (Deploy):** Render
+
+---
+
+## ☁️ Instruções de Deploy (Render)
+
+A aplicação foi preparada para subida automática via integração com o GitHub:
+
+1. Conecte o repositório a um novo **Web Service** no Render.
+2. **Build Command:** `pip install -r requirements.txt`
+3. **Start Command:** `gunicorn app:app`
+4. Na aba **Environment**, adicione as chaves ocultadas pelo `.gitignore`:
+   * `SUPABASE_URL` = url-do-projeto
+   * `SUPABASE_KEY` = chave-service-role *(Garante poder de admin para criar usuários no Auth)*
+   * `N8N_WEBHOOK_URL` = url-do-webhook-de-producao
+5. **Ajuste Final:** Atualize a `Site URL` e as `Redirect URLs` no painel do Supabase Authentication para o domínio gerado pelo Render.
+
+---
+
+## ⚙️ Como executar localmente (Ambiente de Desenvolvimento)
+
+```bash
+# 1. Clone o repositório
+git clone [https://github.com/SEU_USUARIO/desafio-Gaudium.git](https://github.com/SEU_USUARIO/desafio-Gaudium.git)
+cd desafio-Gaudium
+
+# 2. Crie e ative o ambiente virtual
+python -m venv venv
+source venv/bin/activate  # (No Windows: venv\Scripts\activate)
+
+# 3. Instale as dependências
+pip install -r requirements.txt
+
+# 4. Crie o arquivo .env e insira suas chaves do Supabase e n8n
+# (SUPABASE_URL, SUPABASE_KEY, N8N_WEBHOOK_URL)
+
+# 5. Inicie o servidor
+python app.py
