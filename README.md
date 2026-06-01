@@ -29,7 +29,7 @@ Para facilitar a avaliação, os seguintes usuários foram pré-configurados no 
 A plataforma foi desenhada com foco na usabilidade, garantindo que qualquer colaborador consiga utilizar sem necessidade de treino prévio.
 
 <div align="center">
-  <img src="docs/kanban.jpg" alt="Painel Kanban" width="800">
+  <img src="docs/Tela_inicial.png" alt="Painel Kanban" width="800">
   <p><em>Painel Kanban interativo com cálculo visual de SLA e divisão por cores.</em></p>
 </div>
 
@@ -45,9 +45,9 @@ A plataforma foi desenhada com foco na usabilidade, garantindo que qualquer cola
 O sistema não depende de cobrança humana. Webhooks disparam gatilhos no n8n que gerem toda a comunicação transacional com os colaboradores e gestores:
 
 <div align="center">
-  <img src="docs/email-novo.png" alt="Nova Demanda Registrada" width="260">
-  <img src="docs/email-andamento.png" alt="Demanda em Andamento" width="260">
-  <img src="docs/email-alerta.png" alt="Alerta de Inatividade SLA" width="260">
+  <img src="docs/disparonovademanda.png" alt="Nova Demanda Registrada" width="260">
+  <img src="docs/disparoiniciouatendimento.png" alt="Demanda em Andamento" width="260">
+  <img src="docs/disparoinatividade.png" alt="Alerta de Inatividade SLA" width="260">
   <p><em>Fluxo dinâmico: Criação (Roxo), Atendimento Iniciado (Laranja) e Alerta de Ociosidade para Gestores (Vermelho).</em></p>
 </div>
 
