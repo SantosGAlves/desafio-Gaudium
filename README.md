@@ -12,14 +12,16 @@ A aplicação está hospedada na nuvem e pronta para testes. Acesse através do 
 👉 **[Link do Sistema no Render]** *(Adicione seu link gerado no Render aqui)*
 
 ### Credenciais de Teste (Demo)
-Para facilitar a avaliação, os seguintes usuários foram pré-configurados no sistema:
+Para facilitar a avaliação, os seguintes utilizadores foram pré-configurados no sistema:
 
 | Perfil | E-mail | Senha | Nível de Acesso | Visão no Kanban |
 | :--- | :--- | :--- | :--- | :--- |
-| **Gestor / TI** | `admin@gaudium.com` | `123456` | `is_admin = True` | Vê todas as demandas de todas as áreas. Pode criar usuários e excluir tickets. |
+| **Gestor / TI** | `admin@gaudium.com` | `123456` | `is_admin = True` | Vê todas as demandas de todas as áreas. Pode criar utilizadores e excluir tickets. |
 | **Colaborador** | `comercial@gaudium.com` | `123456` | `is_admin = False` | Vê apenas as demandas direcionadas ao seu próprio departamento (Comercial). |
 
-*(**Nota para a banca:** O fluxo de "Esqueci a Senha" está 100% funcional caso desejem testar o envio de e-mails de recuperação).*
+> ⚠️ **Aviso Técnico sobre as Automações (n8n):** > Para fins de desenvolvimento e segurança das credenciais de SMTP, o motor de automação (n8n) está configurado a correr localmente na minha máquina (*localhost*). 
+> * **No link do Render acima:** A banca poderá testar toda a interface, criação de tickets, movimentação no Kanban, relatórios e gestão de utilizadores perfeitamente.
+> * **Os disparos de E-mail:** Como o webhook aponta para o meu ambiente local, os e-mails transacionais não serão enviados através da versão hospedada no Render. Esta integração completa será **demonstrada a funcionar em tempo real durante a minha apresentação**. (Veja as imagens reais abaixo).
 
 ---
 
@@ -37,8 +39,8 @@ A plataforma foi desenhada com foco na usabilidade, garantindo que qualquer cola
 
 <div align="center">
   <img src="docs/nova-demanda.png" alt="Abertura de Demanda" width="400">
-  <img src="docs/gestao-usuarios.png" alt="Gestão de Usuários" width="400">
-  <p><em>Formulário de abertura de chamados (esquerda) e Gestão de Usuários com RBAC (direita).</em></p>
+  <img src="docs/gestao-usuarios.png" alt="Gestão de Utilizadores" width="400">
+  <p><em>Formulário de abertura de chamados (esquerda) e Gestão de Utilizadores com RBAC (direita).</em></p>
 </div>
 
 ### 🤖 Automações de Notificação (n8n)
@@ -60,8 +62,7 @@ Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mens
 1. **O Problema Atual:** Demandas perdidas no Discord/WhatsApp, falta de SLA claro e o solicitante no "escuro" sem saber quem está a atender.
 2. **A Solução (Portal Único):** Um ambiente de abertura estruturada de chamados. O Kanban organiza visualmente o que é prioridade.
 3. **Automação Inteligente (n8n):** O Webhook avisa quando o ticket nasce, notifica o solicitante quando o analista assume a demanda, e finaliza quando concluído.
-4. **Ganhos Mensuráveis (A Cereja do Bolo):** 
-   * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc).
+4. **Ganhos Mensuráveis (A Cereja do Bolo):** * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc).
    * **Exportação de Dados:** Botão para gerar relatórios CSV num clique, entregando *Business Intelligence* imediato para a diretoria.
    * **Segurança (RBAC):** Proteção de nível empresarial com Supabase *Row Level Security*, garantindo que cada um só acesse o que lhe compete.
 
@@ -70,9 +71,9 @@ Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mens
 ## ✨ Destaques Técnicos & Funcionalidades
 
 * **Autenticação e Segurança (Auth):** Login, gestão de sessões criptografadas e recuperação de senhas nativa via e-mail.
-* **Controle de Acesso (RBAC):** Sistema hierárquico isolando a visão com base na variável `is_admin`.
+* **Controlo de Acesso (RBAC):** Sistema hierárquico isolando a visão com base na variável `is_admin`.
 * **Painel Kanban Interativo:** Interface moderna com recurso *Drag & Drop* para movimentação de status.
-* **Exportação de Dados:** Geração instantânea de relatórios `.csv` com o inventário da tela atual.
+* **Exportação de Dados:** Geração instantânea de relatórios `.csv` com o inventário do ecrã atual.
 * **UI/UX Premium:** Alertas customizados (`CustomUI`), responsividade e **Modo Escuro (Dark Mode)** integrado.
 
 ---
@@ -97,7 +98,7 @@ A aplicação foi preparada para subida automática via integração com o GitHu
 3. **Start Command:** `gunicorn app:app`
 4. Na aba **Environment**, adicione as chaves ocultadas pelo `.gitignore`:
    * `SUPABASE_URL` = url-do-projeto
-   * `SUPABASE_KEY` = chave-service-role *(Garante poder de admin para criar usuários no Auth)*
+   * `SUPABASE_KEY` = chave-service-role *(Garante poder de admin para criar utilizadores no Auth)*
    * `N8N_WEBHOOK_URL` = url-do-webhook-de-producao
 5. **Ajuste Final:** Atualize a `Site URL` e as `Redirect URLs` no painel do Supabase Authentication para o domínio gerado pelo Render.
 
