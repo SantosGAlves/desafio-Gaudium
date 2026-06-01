@@ -1,8 +1,8 @@
 # 🚀 Gaudium - Plataforma Inteligente de Gestão de Demandas
 
-[cite_start]Este projeto foi desenvolvido como solução para o **Case 3 (Plataforma de Gestão de Demandas Internas)** [cite: 47] do desafio prático para a vaga de Estágio em Automação e Inovação MIL da Gaudium. 
+Este projeto foi desenvolvido como solução para o **Case 3 (Plataforma de Gestão de Demandas Internas)** do desafio prático para a vaga de Estágio em Automação e Inovação MIL da Gaudium. 
 
-[cite_start]A plataforma resolve o problema de solicitações internas realizadas por diferentes canais (e-mail, Discord) sem fluxo estruturado[cite: 48], centralizando o registro, automatizando a comunicação entre setores via **n8n** e oferecendo uma gestão visual através de um **Painel Kanban** dinâmico.
+A plataforma resolve o problema de solicitações internas realizadas por diferentes canais (e-mail, Discord) sem fluxo estruturado, centralizando o registro, automatizando a comunicação entre setores via **n8n** e oferecendo uma gestão visual através de um **Painel Kanban** dinâmico.
 
 ---
 
@@ -25,12 +25,12 @@ Para facilitar a avaliação, os seguintes usuários foram pré-configurados no 
 
 ## 📊 Roteiro da Apresentação (O Impacto Gerado)
 
-[cite_start]Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mensuráveis**[cite: 7]. Abaixo, o fluxo lógico da solução:
+Este projeto foi arquitetado com foco em **eficiência operacional e ganhos mensuráveis**. Abaixo, o fluxo lógico da solução:
 
-1. [cite_start]**O Problema Atual:** Demandas perdidas no Discord/WhatsApp, falta de SLA claro e o solicitante no "escuro" sem saber quem está atendendo[cite: 49].
-2. [cite_start]**A Solução (Portal Único):** Um ambiente de abertura estruturada de chamados[cite: 51], onde o colaborador não precisa de treinamento para usar. [cite_start]O Kanban organiza visualmente [cite: 52] o que é prioridade.
-3. **Automação Inteligente (n8n):** O sistema não depende de cobrança humana. [cite_start]O Webhook avisa quando o ticket nasce, muda de cor (para Laranja) notificando o solicitante quando o analista assume a demanda [cite: 56][cite_start], e finaliza (Verde) quando concluído[cite: 56].
-4. [cite_start]**Ganhos Mensuráveis (A Cereja do Bolo):** * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc)[cite: 53].
+1. **O Problema Atual:** Demandas perdidas no Discord/WhatsApp, falta de SLA claro e o solicitante no "escuro" sem saber quem está atendendo.
+2. **A Solução (Portal Único):** Um ambiente de abertura estruturada de chamados, onde o colaborador não precisa de treinamento para usar. O Kanban organiza visualmente o que é prioridade.
+3. **Automação Inteligente (n8n):** O sistema não depende de cobrança humana. O Webhook avisa quando o ticket nasce, muda de cor (para Laranja) notificando o solicitante quando o analista assume a demanda, e finaliza (Verde) quando concluído.
+4. **Ganhos Mensuráveis (A Cereja do Bolo):** * **Visualização de SLA:** Cálculo em tempo real com barra de progresso (Risco Crítico, Atrasado, etc).
    * **Exportação de Dados:** Botão de gerar CSV em 1 clique, entregando *Business Intelligence* imediato para a diretoria analisar gargalos.
    * **Segurança (RBAC):** Proteção de nível empresarial com Supabase *Row Level Security*, garantindo que cada um só acesse o que lhe compete.
 
